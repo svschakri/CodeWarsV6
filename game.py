@@ -7,6 +7,7 @@ class PlayerClient:
     def __init__(self, W=800, H=600):
         self.screen = pygame.display.set_mode((W, H))
         pygame.display.set_caption("PyTanks")
+        self.font = pygame.font.SysFont(None, 24)
 
         self.get_player_name()
         self.join_server()
@@ -88,6 +89,18 @@ class PlayerClient:
             fuel = game_world[i, 6]
             if fuel < 99.9:  # jetpack was used recently
                 pygame.draw.circle(self.screen, (255, 165, 0), (int(game_world[i, 1]), int(game_world[i, 2] + 35)), 5)
+
+            # Draw small health bar above each player
+            health = game_world[i, 7]
+            if health is not None:
+                # clamp and compute percent
+                health_percent = max(0.0, min(1.0, health / 200.0))
+                hb_x = int(game_world[i, 1]) - 20
+                hb_y = int(game_world[i, 2]) - 40
+                hb_w, hb_h = 40, 6
+                pygame.draw.rect(self.screen, (50, 50, 50), (hb_x, hb_y, hb_w, hb_h))
+                pygame.draw.rect(self.screen, (255, 0, 0), (hb_x, hb_y, int(hb_w * health_percent), hb_h))
+                pygame.draw.rect(self.screen, (255, 255, 255), (hb_x, hb_y, hb_w, hb_h), 1)
         
         # Draw fuel meter for local player
         if game_world[self.ID, 0] == 1:
@@ -103,6 +116,21 @@ class PlayerClient:
             pygame.draw.rect(self.screen, (0, 255, 255), (bar_x, bar_y, fuel_width, bar_height))
             # Border
             pygame.draw.rect(self.screen, (255, 255, 255), (bar_x, bar_y, bar_width, bar_height), 2)
+
+            # Draw health bar below fuel
+            health = game_world[self.ID, 7]
+            health_percent = max(0.0, min(1.0, health / 200.0))
+            hbar_x, hbar_y = 10, 40
+            hbar_w, hbar_h = 200, 20
+            pygame.draw.rect(self.screen, (50, 50, 50), (hbar_x, hbar_y, hbar_w, hbar_h))
+            pygame.draw.rect(self.screen, (255, 0, 0), (hbar_x, hbar_y, int(hbar_w * health_percent), hbar_h))
+            pygame.draw.rect(self.screen, (255, 255, 255), (hbar_x, hbar_y, hbar_w, hbar_h), 2)
+
+            # Draw score at top-center (always visible)
+            score = int(game_world[self.ID, 8])
+            score_surf = self.font.render(f"Score: {score}", True, (255, 255, 255))
+            sx = self.screen.get_width() // 2 - score_surf.get_width() // 2
+            self.screen.blit(score_surf, (sx, 10))
         
         # Draw bullets
         for i in range(8, 48):
