@@ -45,9 +45,10 @@ class Network:
             client_msg = keyboard_input.tobytes()
             self.client.send(client_msg)
             reply = bytes()
-            while len(reply) < 2688:
+            # expect 48 rows * 10 columns * 8 bytes per float64 = 3840 bytes
+            while len(reply) < 3840:
                 reply += self.client.recv(1024)
-            game_world = np.frombuffer(reply, dtype=np.float64).reshape((48, 7))
+            game_world = np.frombuffer(reply, dtype=np.float64).reshape((48, 10))
             return game_world
         except socket.error as e:
             print(e)
