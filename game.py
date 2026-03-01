@@ -36,6 +36,25 @@ class PlayerClient:
             map_height = self.grid_h * self.grid_size
             self.screen = pygame.display.set_mode((map_width, map_height), pygame.RESIZABLE)
 
+            # Load player sprite frames for animation
+            self.player_frames = [
+                pygame.image.load("assets/character/character1.png").convert_alpha(),
+                pygame.image.load("assets/character/character2.png").convert_alpha(),
+                pygame.image.load("assets/character/character3.png").convert_alpha(),
+                pygame.image.load("assets/character/character4.png").convert_alpha(),
+            ]
+            
+            # Scale all frames
+            self.player_frames = [
+                pygame.transform.scale(frame, (40, 40))
+                for frame in self.player_frames
+            ]
+            
+            # Animation tracking
+            self.player_anim_timers = [0] * 8
+            self.prev_positions = [(0, 0)] * 8
+            self.animation_speed = 6
+
             self.weapon_renderer = WeaponRenderer()
             self.effects_manager = WeaponEffectsManager()
             self.bullet_sprite = self.weapon_renderer.load_gun_sprite("bullet.png")
@@ -254,15 +273,44 @@ class PlayerClient:
             color = config.PLAYER_COLOR
             if i == self.ID:
                     color = config.SELF_COLOR
-            # Draw player circle
-            pygame.draw.circle(self.screen, color, (int(game_world[i, 1]), int(game_world[i, 2])), 12.5)
+            
+            # Get player position and state
+            px = int(game_world[i, 1])
+            py = int(game_world[i, 2])
+            theta = game_world[i, 3]
+            fuel = game_world[i, 6]
+            
+            # Detect movement and jetpack usage
+            prev_x, prev_y = self.prev_positions[i]
+            using_jet = fuel < 99.9   # jetpack active
+            moving = abs(px - prev_x) > 1
+            
+            # Walking animation only if moving AND not jetpacking
+            if moving and not using_jet:
+                self.player_anim_timers[i] += 1
+                frame_index = 1 + (self.player_anim_timers[i] // self.animation_speed) % 2
+            else:
+                frame_index = 0
+            
+            # Update previous position
+            self.prev_positions[i] = (px, py)
+            
+            # Draw character sprite
+            sprite = self.player_frames[frame_index]
+            
+            # Flip based on facing direction
+            if np.cos(theta) < 0:
+                sprite = pygame.transform.flip(sprite, True, False)
+            
+            rect = sprite.get_rect(center=(px, py))
+            self.screen.blit(sprite, rect.topleft)
             
             # Draw weapon instead of aim line
             self.weapon_renderer.draw_gun(
                 self.screen, 
-                int(game_world[i, 1]), 
-                int(game_world[i, 2]), 
-                game_world[i, 3],  # angle
+                px, 
+                py, 
+                theta,  # angle
                 self.player_weapons[i],
                 tank_radius=12.5
             )

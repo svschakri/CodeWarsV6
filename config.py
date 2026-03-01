@@ -397,7 +397,7 @@ WORLD_TOTAL_AMMO = 10
 # =============================================================================
 # GAME MECHANICS
 # =============================================================================
-BULLET_HIT_RADIUS = 25      # Collision detection radius for bullets vs players
+BULLET_HIT_RADIUS = 23      # Collision detection: player sprite (20px radius) + bullet (3px radius)
 RESPAWN_WITH_FULL_FUEL = True
 RESPAWN_WITH_FULL_HEALTH = True
 

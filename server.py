@@ -505,7 +505,9 @@ class Server:
                 
                 bullet_hit = False
                 # Check collision along the bullet's path with multiple interpolation steps
-                steps = 10  # More steps for better detection of fast bullets
+                # Increase steps for more accurate detection with fast bullets
+                bullet_speed = self.world_data[b, 4]
+                steps = max(15, int(bullet_speed / 1.5))  # Dynamic steps based on speed
                 for step in range(steps + 1):
                     if bullet_hit:
                         break
