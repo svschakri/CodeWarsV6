@@ -503,8 +503,8 @@ class PlayerClient:
             
             # Draw bullet sprite if available
             if bullet_sprite:
-                # Scale bullet sprite to small size
-                bullet_size = 6
+                # Make SAW projectile intentionally larger for readability.
+                bullet_size = config.SAW_BULLET_VISUAL_SIZE if weapon_id == config.SAW_WEAPON_ID else config.BULLET_VISUAL_SIZE
                 scaled_bullet = pygame.transform.scale(bullet_sprite, (bullet_size, bullet_size))
                 # Rotate bullet to match trajectory
                 angle_degrees = np.degrees(bullet_angle)

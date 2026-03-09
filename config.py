@@ -13,7 +13,7 @@ SERVER_HOST = "192.168.56.1"  # Change to your server IP
 # MAP SETTINGS
 # =============================================================================
 MAP_OPTIONS = ["catacombs", "outpost"]
-ACTIVE_MAP_INDEX = 1  # 0=catacombs, 1=outpost
+ACTIVE_MAP_INDEX = 0  # 0=catacombs, 1=outpost
 DEFAULT_MAP = MAP_OPTIONS[ACTIVE_MAP_INDEX]
 GRID_SIZE = 16  # Each grid cell is 16x16 pixels
 
@@ -25,6 +25,8 @@ TANK_SPEED = 3.0
 TANK_ROTATION_SPEED = 0.04
 TANK_VISUAL_RADIUS = 7.5
 TANK_COLLISION_RADIUS = 6  # Smaller to prevent getting stuck
+PLAYER_HITBOX_WIDTH = 40.0
+PLAYER_HITBOX_HEIGHT = 40.0
 
 # Aiming
 AIM_ROTATION_SPEED = 0.08  # Radians per frame
@@ -379,6 +381,12 @@ OBSTACLE_BORDER_COLOR = (160, 130, 90)
 # Gun Spawn Visual
 GUN_SPAWN_GLOW_COLOR = (255, 215, 0)  # Gold
 GUN_SPAWN_SCALE = 25                   # Size of spawned gun (matching player size)
+
+# Projectile / grenade visual sizes
+BULLET_VISUAL_SIZE = 6
+SAW_BULLET_VISUAL_SIZE = 12
+GRENADE_VISUAL_SIZE = 10
+PROXY_GRENADE_VISUAL_SIZE = 14
 
 # =============================================================================
 # INPUT INDICES
