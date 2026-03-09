@@ -163,6 +163,7 @@ class Server:
         
         # Fire rate cooldown per player (in seconds, tracks time since last shot)
         self.player_fire_cooldown = np.zeros(8, dtype=np.float64)
+        self.saw_charge_end_time = np.zeros(8, dtype=np.float64)
         # Reload cooldown per player (in seconds, tracks time remaining for reload)
         self.player_reload_cooldown = np.zeros(8, dtype=np.float64)
         # Track previous frame's input state for edge detection
@@ -569,6 +570,7 @@ class Server:
     def run_game(self):
         MAX_BULLET_DIST = config.MAX_BULLET_DISTANCE
         SAW_WEAPON_ID = config.SAW_WEAPON_ID
+        SAW_FIRE_DELAY = getattr(config, 'SAW_FIRE_DELAY', 2.0)
         SAW_LIFETIME = config.SAW_LIFETIME
         SAW_EXPLOSION_RADIUS = config.SAW_EXPLOSION_RADIUS
         SAW_EXPLOSION_DAMAGE = config.SAW_EXPLOSION_DAMAGE
@@ -1029,7 +1031,34 @@ class Server:
                             weapon.reload()
 
             # create bullets (space = index 7)
+            for idx in range(8):
+                # Cancel SAW charge when player is dead.
+                if self.world_data[idx, 0] != 1:
+                    self.saw_charge_end_time[idx] = 0.0
+                    continue
+                current_weapon = self.player_inventories[idx].get_current_gun()
+                # Cancel SAW charge if player switched away from SAW.
+                if current_weapon is None or current_weapon.gun_id != SAW_WEAPON_ID:
+                    self.saw_charge_end_time[idx] = 0.0
+                    continue
+
+                # Tap-to-charge: start SAW charge only on shoot key rising edge.
+                if (
+                    self.player_inputs[idx, 7] == 1
+                    and self.previous_inputs[idx, 7] == 0
+                    and self.saw_charge_end_time[idx] <= 0.0
+                    and self.player_reload_cooldown[idx] <= 0
+                    and self.player_fire_cooldown[idx] <= 0
+                    and current_weapon.can_shoot()
+                ):
+                    self.saw_charge_end_time[idx] = current_time + SAW_FIRE_DELAY
+
             shooting_id = np.where(self.player_inputs[:, 7] == 1)[0]
+            saw_ready_id = np.where(
+                (self.saw_charge_end_time > 0.0)
+                & (self.saw_charge_end_time <= current_time)
+            )[0]
+            shooting_id = np.unique(np.concatenate((shooting_id, saw_ready_id)))
             for idx in shooting_id:
                 if self.world_data[idx, 0] != 1:
                     continue
@@ -1040,13 +1069,23 @@ class Server:
                 
                 # Check if currently reloading
                 if self.player_reload_cooldown[idx] > 0:
+                    if weapon.gun_id == SAW_WEAPON_ID:
+                        self.saw_charge_end_time[idx] = 0.0
                     continue
                 
                 # Check fire cooldown and ammo
                 if self.player_fire_cooldown[idx] > 0:
                     continue
+
+                if weapon.gun_id == SAW_WEAPON_ID:
+                    if self.saw_charge_end_time[idx] <= 0.0:
+                        self.saw_charge_end_time[idx] = current_time + SAW_FIRE_DELAY
+                        continue
+                    if current_time < self.saw_charge_end_time[idx]:
+                        continue
                 
                 if not weapon.can_shoot():
+                    self.saw_charge_end_time[idx] = 0.0
                     # Auto reload if out of ammo
                     if weapon.total_ammo > 0:
                         self.player_reload_cooldown[idx] = weapon.reload_time
@@ -1098,6 +1137,7 @@ class Server:
                         bullets_spawned += 1
                 
                 if bullets_spawned > 0:
+                    self.saw_charge_end_time[idx] = 0.0
                     # Set cooldown based on weapon's rate of fire
                     self.player_fire_cooldown[idx] = weapon.rate_of_fire
                     # Immediately sync ammo to world_data after shooting

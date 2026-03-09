@@ -437,6 +437,7 @@ SAW_LIFETIME = 5                    # Seconds a saw projectile stays alive
 SAW_EXPLOSION_RADIUS = 60.0         # Small frag-like blast on saw timeout
 SAW_EXPLOSION_DAMAGE = 300.0
 SAW_SELF_HIT_ARM_DISTANCE = 35.0    # Must travel this far before it can hurt the shooter
+SAW_FIRE_DELAY = 2.0                # Hold fire key this long before SAW bullet is released
 
 RESPAWN_WITH_FULL_FUEL = True
 RESPAWN_WITH_FULL_HEALTH = True
